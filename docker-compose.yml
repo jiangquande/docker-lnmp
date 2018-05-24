@@ -1,0 +1,60 @@
+version: "3.5"
+services:
+  # Nginx 1.14.0: https://hub.docker.com/_/nginx/
+  nginx:
+    image: nginx:1.14.0
+    ports:
+      - 80:80
+    depends_on:
+      - php
+    volumes:
+      - ./nginx/config:/etc/nginx/conf.d:ro  #配置文件
+      - ./nginx/logs:/var/log/nginx   #日志
+      - ./code:/mnt/code   #代码
+
+  # PHP 7.2-fpm: https://hub.docker.com/_/php/
+  php:
+    # image: php:7.2-fpm
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    ports:
+          - 9000:9000
+    volumes:
+       - ./php/config/docker.conf:/usr/local/etc/php-fpm.d/docker.conf  #docker 配置文件
+       - ./php/config/www.conf:/etc/php-fpm.d/www.conf            #php-fpm配置
+       - ./php/data:/data                                          #php其他配置
+       - ./code:/mnt/code                                         #code代码
+
+
+  # MySQL 5.7: https://hub.docker.com/_/mysql/
+
+  mysql:
+    image: mysql:5.7
+    # 设置 3306 端口映射以便远程连接
+    ports:
+      - 3306:3306
+    # 配置一些环境变量，具体的环境变量细节可以访问上面的网址查看
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_USER: "admin"
+      MYSQL_PASSWORD: "admin"
+    volumes:
+      - ./datas/mysql:/var/lib/mysql                            #数据库文件
+      - ./datas/mysql/log:/var/log/mysql                        #日志
+      - ./mysql/run/mysqlmysqld:/var/run/mysqld                 #sockey句柄
+
+
+
+  # 用于 Git，Composer 等工具
+  console:
+    build:
+      context: ./console
+      dockerfile: Dockerfile
+    volumes:
+          - ./code:/mnt/code   #代码
+    tty: true
+
+
+
+
